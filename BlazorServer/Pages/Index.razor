@@ -1,0 +1,67 @@
+﻿@page "/"
+
+<PageTitle>CRUD 30 Mins</PageTitle>
+
+<h1>CRUD 30 Mins</h1>
+
+<a href="/create" class="btn btn-success btn-lg w-100 my-4">+ Create</a>
+
+<table class="table table-responsive table-striped">
+    <thead>
+        <tr>
+            <th scope="col">Id (PK)</th>
+            <th scope="col">Title</th>
+            <th scope="col">Content</th>
+            <th scope="col">CRUD</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (_posts != null)
+        {
+            foreach (var post in _posts)
+            {
+                <tr>
+                    <th scope="row">@post.PostId</th>
+                    <td>@post.Title</td>
+                    <td>@post.Content</td>
+                    <td>
+                        <a href="/update/@post.PostId" class="btn btn-warning btn-lg w-100 my-2">
+                            Update
+                        </a>
+                        <button @onclick="() => DeletePostAsync(post)" class="btn btn-danger btn-lg w-100 my-2">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@inject IJSRuntime JsRuntime
+@code {
+    private List<Post> _posts = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = new CRUD30MinsDbContext();
+
+        _posts = await context.Posts.ToListAsync();
+    }
+
+    private async Task DeletePostAsync(Post postToDelete)
+    {
+        using var context = new CRUD30MinsDbContext();
+        context.Posts.Remove(postToDelete);
+
+        if (await context.SaveChangesAsync() > 0)
+        {
+            _posts.Remove(postToDelete);
+        }
+        else
+        {
+            string errorMessage = $"ERROR: Failed to delete post \"{postToDelete.Title}\"";
+            await JsRuntime.InvokeVoidAsync("alert", errorMessage);
+        }
+    }
+}
